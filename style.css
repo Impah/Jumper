@@ -1,0 +1,147 @@
+body { 
+    margin: 0; 
+}
+canvas { 
+    display: block; 
+}
+
+#container {
+    position: absolute
+}
+
+#points-counter {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1;
+    background-color: rgba(255, 255, 255, 0.5);
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+#total-points {
+    padding: 10px;
+}
+
+
+#container-popup {
+    display: none;
+}
+
+#win-popup {
+    display: flex;
+    flex-direction: column;
+    position: absolute; /* Posicionamiento absoluto */
+    top: 10%; /* Distancia desde la parte superior */
+    left: 50%; /* Centrado horizontal */
+    transform: translateX(-50%); /* Centrado horizontal */
+    background-color: rgba(255, 255, 255, 0.8); /* Fondo semi-transparente */
+    padding: 15px; /* Espacio interior */
+    border-radius: 10px; /* Bordes redondeados */
+    z-index: 100; /* Asegura que el pop-up esté sobre el canvas */
+    text-align: center; /* Centra el contenido horizontalmente */
+}
+
+#win-popup img {
+    width: 200px; /* Tamaño de la imagen */
+    height: auto; /* Altura automática para mantener la proporción */
+    margin-bottom: 10px; /* Espacio entre la imagen y el botón */
+}
+
+
+/* Estilos para el pop-up de "Perdiste" */
+#container-popup-lose {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+#lose-popup {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+#lose-popup img {
+    width: 200px;
+    height: auto;
+    margin-bottom: 20px;
+}
+
+#reset-button {
+    background-color: #4CAF50; /* Color de fondo */
+    color: white; /* Color del texto */
+    padding: 10px 20px; /* Espacio interior */
+    border: none; /* Sin borde */
+    border-radius: 5px; /* Bordes redondeados */
+    cursor: pointer; /* Cursor de puntero al pasar por encima */
+}
+
+#reset-button:hover {
+    background-color: #45a049; /* Cambia el color de fondo al pasar por encima */
+}
+
+#reset-button-lose {
+    background-color: #4CAF50; /* Color de fondo */
+    color: white; /* Color del texto */
+    padding: 10px 20px; /* Espacio interior */
+    border: none; /* Sin borde */
+    border-radius: 5px; /* Bordes redondeados */
+    cursor: pointer; /* Cursor de puntero al pasar por encima */
+}
+
+#reset-button-lose:hover {
+    background-color: #45a049; /* Cambia el color de fondo al pasar por encima */
+}
+
+
+#instructions-popup {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    z-index: 1000; /* Asegura que el pop-up esté sobre el resto de los elementos */
+    display: flex; /* Utilizamos flexbox para organizar los elementos internos */
+    flex-direction: column; /* Organiza los elementos verticalmente */
+    align-items: center; /* Centra los elementos horizontalmente */
+}
+
+#instructions-popup h2 {
+    margin-top: 0;
+}
+
+#instructions-popup p {
+    margin-bottom: 10px;
+}
+
+#close-instructions {
+    display: block;
+    padding: 5px 10px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#close-instructions:hover {
+    background-color: #0056b3;
+}
+
+

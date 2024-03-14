@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jumper</title>
+  <script type="module" crossorigin src="/Jumper/assets/index-BTXggwAp.js"></script>
+  <link rel="stylesheet" crossorigin href="/Jumper/assets/index-C1wW0qKY.css">
+</head>
+<body>
+    <!-- Container for points counter and canvas -->
+    <div id="container">
+        <!-- Points counter -->
+        <div id="points-counter">Puntos: <span id="points">0</span></div>
+
+        <!-- Canvas for rendering the game -->
+        <canvas id="game-canvas"></canvas>
+    </div>
+
+    <!-- Pop-up de "Ganaste" -->
+    <div id="container-popup">
+        <div id="win-popup">
+            <img src="/Jumper/assets/ganaste-79sOjtYm.jpg" alt="Ganaste">
+            <div id="total-points">PUNTOS: <span id="total-score">0</span></div>
+            <button id="reset-button">Reiniciar Juego</button>
+        </div>
+    </div>
+
+    <!-- Pop-up de "Perdiste" -->
+    <div id="container-popup-lose">
+        <div id="lose-popup">
+            <img src="/Jumper/assets/perdiste-l6MPrlXE.jpg" alt="Perdiste">
+            <button id="reset-button-lose">Reiniciar Juego</button>
+        </div>
+    </div>
+
+    <!-- Pop-up de instrucciones -->
+    <div id="instructions-popup">
+        <h2>Controles del Juego</h2>
+        <p>Presiona la barra espaciadora para saltar.</p>
+        <p>Usa las teclas A y D para moverte a la izquierda y derecha respectivamente.</p>
+        <p>Para moverse en el aire, hay que volver a pulsar A y D respectivamente.</p>
+        <p>En el celular es simple, desliza el dedo hacia arriba para saltar y desliza para derecha o izquierda para mover el cubo</p>
+        <p>Espero lo disfrutes!</p>
+        <button id="close-instructions">Cerrar</button>
+    </div>
+
+    <!-- JavaScript file for game logic -->
+</body>
+</html>
