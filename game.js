@@ -1,13 +1,17 @@
 import * as THREE from 'three';
 import TWEEN from '@tweenjs/tween.js'; // Importa Tween.js para las animaciones
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
 
 let camera, scene, renderer;
-let player, platforms, coins, star;
+let player, platforms,lastPlatform, coins, star;
 let score = 0;
 
 let velocity = 0; // Velocidad inicial
 const gravity = 0.01; // Gravedad
 let jumping = false; // Variable para controlar si el cubo está en medio de un salto
+
+
 
 function init() {
     scene = new THREE.Scene();
@@ -24,8 +28,33 @@ function init() {
     const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
     player = new THREE.Mesh(geometry, material);
     player.position.set(0, 0.5, 0);
-    scene.add(player);
 
+
+    // Crear una luz direccional frontal
+    const directionalLightFront = new THREE.DirectionalLight(0xffffff, 5);
+    directionalLightFront.position.set(0, 1, 0); // Ajusta la posición de la luz en el eje Y para que esté arriba
+    directionalLightFront.target.position.set(0, 0, 0); // Establece el objetivo de la luz en el centro de la escena
+    scene.add(directionalLightFront);
+
+    // Crear una luz ambiental
+    const ambientLight = new THREE.AmbientLight(0xffffff, 5);
+    scene.add(ambientLight);
+
+    // Cargar la textura del cielo y las nubes
+    const textureLoader = new THREE.TextureLoader();
+    const skyTexture = textureLoader.load('img/cieloConNubes.jpg'); // Reemplaza 'sky.jpg' con la ruta a tu imagen del cielo y las nubes
+
+    // Crear un material utilizando la textura cargada
+    const skyMaterial = new THREE.MeshBasicMaterial({ map: skyTexture, side: THREE.BackSide });
+
+    // Crear una geometría grande para el cielo y las nubes
+    const skyGeometry = new THREE.BoxGeometry(2000, 1000, 1000); // Ajusta el tamaño del cubo según tus necesidades
+
+    // Crear una malla con la geometría y el material del cielo y las nubes
+    const skyMesh = new THREE.Mesh(skyGeometry, skyMaterial);
+
+    // Agregar la malla al escenario
+    scene.add(skyMesh);
 
     platforms = new THREE.Group();
     scene.add(platforms);
@@ -41,113 +70,153 @@ function init() {
         instructionsPopup.style.display = 'none';
     });
 
-    // Agregar plataformas y monedas
-    const platformGeometry = new THREE.BoxGeometry(5, 0.2, 5);
-    const platformMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    const coinGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-    const coinMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+    
+    const loader = new GLTFLoader();
 
-    let lastPlatform;
+    // Cargar el modelo de la plataforma
+    const platformPath = 'models3d/round_platform.glb';
+    loader.load(platformPath, function (gltf) {
+        const platformModel = gltf.scene; // Obtener la escena del modelo
 
-    for (let i = 1; i <= 20; i++) {
-        const platform = new THREE.Mesh(platformGeometry, platformMaterial);
-        platform.position.set(0, i * 2.3, 0); // Posiciones de ejemplo, puedes ajustarlas según tus necesidades
+        // Aplicar una escala al modelo para ajustar su tamaño
+        const scaleFactor = 1; // Factor de escala (ajústalo según sea necesario)
+        platformModel.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
-        if (i === 20) {
-            lastPlatform = platform;
-        }
+        // Iterar para colocar el modelo en lugar de las plataformas
+        for (let i = 1; i <= 20; i++) {
+            // Clonar el modelo
+            const platform = platformModel.clone();
 
-        const numCoins = Math.floor(Math.random() * 3) + 1; // Entre 1 y 3 monedas por plataforma
-        for (let j = 0; j < numCoins; j++) {
-            const coin = new THREE.Mesh(coinGeometry, coinMaterial);
-            coin.position.set(Math.random() * 6 - 2, i * 2.3 + 1, 0); // Posición aleatoria encima de la plataforma
-            coins.add(coin);
-        }
+            // Calcular la posición de la plataforma (ajústala según tus necesidades)
+            platform.position.set(0, i * 2.3, 0);
 
-        // Creamos una animación Tween.js para hacer que la plataforma se mueva de un lado a otro
-        const platformMovement = new TWEEN.Tween(platform.position)
+            // Agregar la plataforma al grupo de plataformas
+            platforms.add(platform);
+
+            // Si es la última plataforma, establecerla como referencia
+            if (i === 20) {
+                lastPlatform = platform;
+
+                // Colocar la estrella en la posición de la última plataforma
+                const starPath = 'models3d/shining_star_low_poly.glb';
+                loader.load(starPath, function (gltfstar) {
+                    const starModel = gltfstar.scene; // Obtener la escena del modelo
+
+                    // Aplicar una escala al modelo para ajustar su tamaño
+                    const scaleFactor = 2; // Factor de escala (ajústalo según sea necesario)
+                    starModel.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+                    // Configurar la posición de la estrella
+                    star = starModel.clone();
+                    star.position.copy(lastPlatform.position);
+                    star.position.y += 4; // Elevar la estrella para que esté encima de la última plataforma
+                    scene.add(star);
+
+                });
+            }
+
+            // Resto del código para la configuración de las plataformas...
+            // Creamos una animación Tween.js para hacer que la plataforma se mueva de un lado a otro
+            const platformMovement = new TWEEN.Tween(platform.position)
             .to({ x: Math.random() > 0.5 ? 5 : -5 }, 1600) // Mueve la plataforma a una posición aleatoria a la derecha o izquierda
             .easing(TWEEN.Easing.Quadratic.InOut) // Aplica una función de easing para suavizar la animación
             .yoyo(true) // Hace que la animación se invierta automáticamente después de completarse
             .repeat(Infinity) // Hace que la animación se repita infinitamente
             .delay(Math.random() * 2000) // Agrega un pequeño retraso aleatorio para cada plataforma
             .start(); // Inicia la animación
-
-        platforms.add(platform);
-    }
-
-    // Crear estrella gigante
-    const starGeometry = new THREE.BoxGeometry(2, 2, 2);
-    const starMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-    star = new THREE.Mesh(starGeometry, starMaterial);
-    star.position.copy(lastPlatform.position); // Colocar la estrella en la posición de la última plataforma
-    star.position.y += 4; // Elevar la estrella para que esté encima de la última plataforma
-    scene.add(star);
-
-    // Se reinicia el juego cuando ganas
-document.getElementById('reset-button').addEventListener('click', function () {
-    // Reiniciar el puntaje a cero
-    score = 0;
-    document.getElementById('points').textContent = score;
-
-    // Eliminar todas las monedas restantes
-    coins.children = [];
-
-    // Reiniciar la posición del jugador
-    player.position.set(0, 0.5, 0);
-
-    // Reiniciar la posición de las plataformas
-    platforms.children.forEach(platform => {
-        platform.position.x = 0; // Reiniciar posición en el eje X
+        }
     });
 
-    // Volver a generar las monedas
-    for (let i = 1; i <= 20; i++) { // Suponiendo que hay 5 plataformas en total
-        const numCoins = Math.floor(Math.random() * 3) + 1; // Entre 1 y 3 monedas por plataforma
-        for (let j = 0; j < numCoins; j++) {
-            const coin = new THREE.Mesh(coinGeometry, coinMaterial);
-            const platformIndex = Math.floor(Math.random() * platforms.children.length);
-            const platform = platforms.children[platformIndex];
-            coin.position.set(Math.random() * 6 - 2, platform.position.y + 1, 0); // Posición aleatoria encima de la plataforma
-            coins.add(coin);
-        }
-    }
+    
+    // Ruta del modelo de la moneda
+    const coinPath = 'models3d/coin.glb';
 
-    // Ocultar el pop-up de "Ganaste"
-    document.getElementById('container-popup').style.display = 'none';
+    // Cargar el modelo de la moneda
+        loader.load(coinPath, function (gltf) {
+            const coinModel = gltf.scene;
 
-    // Reactivar el juego
-    resetGame();
-});
+            // Realiza las operaciones necesarias con el modelo cargado
+            coinModel.scale.set(0.08, 0.08, 0.08); // Ajusta la escala de la moneda según sea necesario
 
-    // Se reinicia el juego cuando perdes
-    document.getElementById('reset-button-lose').addEventListener('click', function () {
-        // Reiniciar el puntaje a cero
-        score = 0;
-        document.getElementById('points').textContent = score;
+            // Iterar para colocar las monedas en posiciones aleatorias en las plataformas
+            for (let i = 1; i <= 20; i++) {
+                // Agregar monedas a la plataforma (si es necesario)
+                const numCoins = Math.floor(3); // Entre 1 y 3 monedas por plataforma
+                for (let j = 0; j < numCoins; j++) {
+                    const coin = coinModel.clone(); // Clonar el modelo de moneda
+                    const randomX = Math.random() * 5.5 - 2; // Posición X aleatoria entre -2 y 4
+                    const randomNegX = Math.random() * -5.5 + 2; // Posición X aleatoria entre -2 y -6
+                    coin.position.set(Math.random() > 0.5 ? randomX : randomNegX, i * 2.3 + 0.8 , -1); // La posición X puede ser positiva o negativa
+                    coins.add(coin); // Agregar la moneda al grupo de monedas
+                }
+            }
 
-        // Eliminar todas las monedas restantes
-        coins.children = [];
+            // Se reinicia el juego cuando ganas
+        document.getElementById('reset-button').addEventListener('click', function () {
+            // Reiniciar el puntaje a cero
+            score = 0;
+            document.getElementById('points').textContent = score;
 
-        // Reiniciar la posición del jugador
-        player.position.set(0, 0.5, 0);
+            // Eliminar todas las monedas restantes
+            coins.children = [];
 
-        // Reiniciar la posición de las plataformas
-        platforms.children.forEach(platform => {
-            platform.position.x = 0; // Reiniciar posición en el eje X
+            // Reiniciar la posición del jugador
+            player.position.set(0, 0.1, 0);
+
+            // Reiniciar la posición de las plataformas
+            platforms.children.forEach(platform => {
+                platform.position.x = 0; // Reiniciar posición en el eje X
+            });
+
+            // Volver a generar las monedas
+            for (let i = 1; i <= 20; i++) {
+                // Agregar monedas a la plataforma (si es necesario)
+                const numCoins = Math.floor(3); // Entre 1 y 3 monedas por plataforma
+                for (let j = 0; j < numCoins; j++) {
+                    const coin = coinModel.clone(); // Clonar el modelo de moneda
+                    const randomX = Math.random() * 5.5 - 2; // Posición X aleatoria entre -2 y 4
+                    const randomNegX = Math.random() * -5.5 + 2; // Posición X aleatoria entre -2 y -6
+                    coin.position.set(Math.random() > 0.5 ? randomX : randomNegX, i * 2.3 + 0.8 , -1); // La posición X puede ser positiva o negativa
+                    coins.add(coin); // Agregar la moneda al grupo de monedas
+                }
+            }
+
+            // Ocultar el pop-up de "Ganaste"
+            document.getElementById('container-popup').style.display = 'none';
+
+            // Reactivar el juego
+            resetGame();
         });
 
-        // Volver a generar las monedas
-        for (let i = 1; i <= 20; i++) { // Suponiendo que hay 5 plataformas en total
-            const numCoins = Math.floor(Math.random() * 3) + 1; // Entre 1 y 3 monedas por plataforma
-            for (let j = 0; j < numCoins; j++) {
-                const coin = new THREE.Mesh(coinGeometry, coinMaterial);
-                const platformIndex = Math.floor(Math.random() * platforms.children.length);
-                const platform = platforms.children[platformIndex];
-                coin.position.set(Math.random() * 6 - 2, platform.position.y + 1, 0); // Posición aleatoria encima de la plataforma
-                coins.add(coin);
+        // Se reinicia el juego cuando perdes
+        document.getElementById('reset-button-lose').addEventListener('click', function () {
+            // Reiniciar el puntaje a cero
+            score = 0;
+            document.getElementById('points').textContent = score;
+
+            // Eliminar todas las monedas restantes
+            coins.children = [];
+
+            // Reiniciar la posición del jugador
+            player.position.set(0, 0.1, 0);
+
+            // Reiniciar la posición de las plataformas
+            platforms.children.forEach(platform => {
+                platform.position.x = 0; // Reiniciar posición en el eje X
+            });
+
+            // Volver a generar las monedas
+            for (let i = 1; i <= 20; i++) {
+                // Agregar monedas a la plataforma (si es necesario)
+                const numCoins = Math.floor(3); // Entre 1 y 3 monedas por plataforma
+                for (let j = 0; j < numCoins; j++) {
+                    const coin = coinModel.clone(); // Clonar el modelo de moneda
+                    const randomX = Math.random() * 5.5 - 2; // Posición X aleatoria entre -2 y 4
+                    const randomNegX = Math.random() * -5.5 + 2; // Posición X aleatoria entre -2 y -6
+                    coin.position.set(Math.random() > 0.5 ? randomX : randomNegX, i * 2.3 + 0.8 , -1); // La posición X puede ser positiva o negativa
+                    coins.add(coin); // Agregar la moneda al grupo de monedas
+                }
             }
-        }
 
         // Ocultar el pop-up de "Ganaste"
         document.getElementById('container-popup-lose').style.display = 'none';
@@ -156,26 +225,131 @@ document.getElementById('reset-button').addEventListener('click', function () {
         gameOver = false; // Variable global para seguir el estado del juego
     });
 
+    });
 
+
+    const fbxLoader = new FBXLoader();
+
+    fbxLoader.load('models3d/Raton/Mousee.fbx', function (fbx) {
+        // Escala el modelo para hacerlo más pequeño
+        fbx.scale.set(0.011, 0.011, 0.011);
+    
+        // Agrega el modelo a la escena
+        scene.add(fbx);
+    
+        // Asigna el modelo cargado a la variable player
+        player = fbx;
+    
+        // Reproducir la animación
+        const mixer = new THREE.AnimationMixer(player);
+        const idleAction = mixer.clipAction(player.animations[0]); // Suponiendo que la quinta animación es la de Idle
+        idleAction.play();
+    
+        // Actualizar la animación en cada cuadro
+        function animate() {
+            mixer.update(0.016); // Puedes ajustar este valor según la velocidad de tu juego
+            requestAnimationFrame(animate);
+        }
+    
+        document.addEventListener('keydown', function (event) {
+            if (event.code === 'Space') { // Verifica si se ha pulsado la barra espaciadora
+                jump(); // Llama a la función de salto
+    
+                // Detener la animación actual
+                mixer.stopAllAction();
+    
+                // Reproducir la animación de salto una vez con easing
+                const jumpAction = mixer.clipAction(player.animations[1]); // Suponiendo que la segunda animación es la de salto
+                jumpAction.clampWhenFinished = true; // Asegura que la animación se detenga al finalizar
+                jumpAction.loop = THREE.LoopOnce; // Reproducir una vez
+
+                // Ajusta la velocidad de reproducción y aplica easing
+                jumpAction.timeScale = 0.001; // Ajusta la velocidad de reproducción (cambia el valor según sea necesario)
+                jumpAction.setEffectiveTimeScale(3); // Ajusta el efecto de escala de tiempo para aplicar easing (cambia el valor según sea necesario)
+
+                jumpAction.play();
+    
+                // Programar la reanudación de la animación de inactividad (idle) después de que termine la animación de salto
+                setTimeout(function () {
+                    mixer.stopAllAction();
+                    idleAction.play(); // Vuelve a reproducir la animación de idle
+                }, jumpAction._clip.duration * 660); // Espera el tiempo de duración de la animación de salto antes de reproducir la animación de inactividad
+            }
+        });
+
+
+        // Event listener para detectar la pulsación continua de las teclas A y D
+        document.addEventListener('keydown', function (event) {
+            if (event.code === 'KeyA') { // Verifica si se ha pulsado la tecla A (moverse a la izquierda)
+                const runLeftAction = mixer.clipAction(player.animations[2]); // Suponiendo que la tercera animación es la de correr hacia la izquierda
+                player.rotation.y = 5; //Restablecer la rotación del modelo (mirando hacia la izquierda)
+                if (runLeftAction && !runLeftAction.isRunning()) {
+                    // Inicia la animación de correr hacia la izquierda si no se está reproduciendo
+                    runLeftAction.play();
+                }
+            } else if (event.code === 'KeyD') { // Verifica si se ha pulsado la tecla D (moverse a la derecha)
+                const runRightAction = mixer.clipAction(player.animations[2]); // Suponiendo que la tercera animación es la de correr hacia la derecha
+                player.rotation.y = 20;// Restablecer la rotación del modelo (mirando hacia la derecha)
+                if (runRightAction && !runRightAction.isRunning()) {
+                    // Inicia la animación de correr hacia la derecha si no se está reproduciendo
+                    runRightAction.play();
+                }
+            }
+        });
+
+        // Event listener para detectar el levantamiento de las teclas A y D
+        document.addEventListener('keyup', function (event) {
+            if (event.code === 'KeyA') { // Verifica si se ha soltado la tecla A (moverse a la izquierda)
+                const runLeftAction = mixer.clipAction(player.animations[2]); // Suponiendo que la tercera animación es la de correr hacia la izquierda
+                if (runLeftAction && runLeftAction.isRunning()) {
+                    // Detiene la animación de correr hacia la izquierda si se está reproduciendo
+                    runLeftAction.stop();
+                }
+            } else if (event.code === 'KeyD') { // Verifica si se ha soltado la tecla D (moverse a la derecha)
+                const runRightAction = mixer.clipAction(player.animations[2]); // Suponiendo que la tercera animación es la de correr hacia la derecha
+                if (runRightAction && runRightAction.isRunning()) {
+                    // Detiene la animación de correr hacia la derecha si se está reproduciendo
+                    runRightAction.stop();
+                }
+            }
+        });
+    
+        animate(); // Inicia la animación después de cargar el modelo
+    });
+
+    
+
+    // Cargar el modelo 3D del terreno
+    const terrainLoader = new GLTFLoader();
+    terrainLoader.load('models3d/low_poly_environments_01.glb', function (gltf) {
+        const terrain = gltf.scene;
+
+        // Ajustar la escala del terreno
+        terrain.scale.set(4, 4, 4); // Ajusta según sea necesario
+
+        // Ajustar la posición del terreno para que esté debajo del eje Y
+        terrain.position.set(0, -0.95, 45); // Por ejemplo, para que esté 10 unidades debajo del eje Y
+
+        terrain.rotation.y = 4.7;
+
+        // Agregar el terreno a la escena
+        scene.add(terrain);
+    });
 
     animate();
 }
 
 
 function handleCoinCollision() {
-    const playerBottomY = player.position.y - 0.5;
-    const playerTopY = player.position.y + 0.5;
-    const playerLeftX = player.position.x - 0.5;
-    const playerRightX = player.position.x + 0.5;
-
     coins.children.forEach(coin => {
-        const coinBottomY = coin.position.y - 0.25;
-        const coinTopY = coin.position.y + 0.25;
-        const coinLeftX = coin.position.x - 0.25;
-        const coinRightX = coin.position.x + 0.25;
+        // Obtener los límites del modelo del jugador
+        const playerBoundingBox = new THREE.Box3().setFromObject(player);
 
-        if (playerTopY >= coinBottomY && playerBottomY <= coinTopY &&
-            playerRightX >= coinLeftX && playerLeftX <= coinRightX) {
+        // Obtener los límites del modelo de la moneda
+        const coinBoundingBox = new THREE.Box3().setFromObject(coin);
+
+        // Verificar si hay colisión entre los dos modelos
+        if (playerBoundingBox.intersectsBox(coinBoundingBox)) {
             coins.remove(coin);
             score++;
             document.getElementById('points').textContent = score;
@@ -208,6 +382,7 @@ function update() {
 
     console.log("Posicion del cubo " + player.position.y);
     console.log(velocity);
+    console.log('gravedad'+gravity);
 
     // Verificar si el jugador ha caído lo suficiente como para perder
     if (velocity < -0.35 && player.position.y <= 50) {
@@ -220,8 +395,8 @@ function update() {
         // Verifica si el cubo está en contacto con alguna plataforma
         const collisionPlatforms = platforms.children.filter(platform => {
             // Calculamos los límites del cubo
-            const playerBottomY = player.position.y - 0.5;
-            const playerTopY = player.position.y + 0.5;
+            const playerBottomY = player.position.y - 0.3;
+            const playerTopY = player.position.y + 0.3;
             const playerLeftX = player.position.x - 0.5;
             const playerRightX = player.position.x + 0.5;
 
@@ -242,7 +417,7 @@ function update() {
             const lowestPlatform = collisionPlatforms.reduce((prev, curr) => {
                 return prev.position.y < curr.position.y ? prev : curr;
             }); // Encuentra la plataforma más baja
-            player.position.y = lowestPlatform.position.y + 0.6; // Posiciona el cubo en la plataforma
+            player.position.y = lowestPlatform.position.y + 0.1; // Posiciona el cubo en la plataforma
             velocity = 0; // Detiene la caída
             jumping = false; // Marca que el cubo ha terminado el salto
         } else { // Si el cubo no está en una plataforma o está subiendo
@@ -267,7 +442,15 @@ function update() {
 let winAlertShown = false; // Variable para controlar si la alerta de victoria ya se ha mostrado
 let winPopup = document.getElementById('container-popup'); // Obtener el elemento del pop-up
 
+// Crear estrella gigante
+const starGeometry = new THREE.BoxGeometry(2, 2, 2);
+const starMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+star = new THREE.Mesh(starGeometry, starMaterial);
+star.position.y = 1000
+
 function checkWin() {
+
+
     const playerBox = new THREE.Box3().setFromObject(player);
     const starBox = new THREE.Box3().setFromObject(star);
 
@@ -276,10 +459,9 @@ function checkWin() {
     if (playerBox.intersectsBox(starBox) && !winAlertShown) {
         winPopup.style.display = 'block'; // Mostrar el pop-up
         winAlertShown = true; // Marca que el pop-up ya se ha mostrado
-        
+
         // Pausar el juego
         cancelAnimationFrame(animationID); // Detener la actualización del bucle de animación
-        document.removeEventListener('keydown', handleKeyDown); // Desactivar el event listener del teclado
     }
 }
 
@@ -321,7 +503,6 @@ function moveRight() {
     }
 }
 
-
 function render() {
     renderer.render(scene, camera);
 }
@@ -332,9 +513,6 @@ function resetGame() {
 
     // Reactivar la actualización del bucle de animación
     animate();
-
-    // Reactivar el event listener del teclado
-    document.addEventListener('keydown', handleKeyDown);
 }
 
 let animationID;
@@ -372,14 +550,14 @@ let touchStartY = 0;
 const movementScaleFactor = 0.25; // Puedes ajustar este valor según tu preferencia
 
 // Evento touchstart
-document.addEventListener('touchstart', function(event) {
+document.addEventListener('touchstart', function (event) {
     // Obtener las coordenadas táctiles iniciales
     touchStartX = event.touches[0].clientX;
     touchStartY = event.touches[0].clientY;
 });
 
 // Evento touchmove
-document.addEventListener('touchmove', function(event) {
+document.addEventListener('touchmove', function (event) {
     // Obtener las coordenadas táctiles actuales
     const touchCurrentX = event.touches[0].clientX;
     const touchCurrentY = event.touches[0].clientY;
@@ -412,12 +590,8 @@ document.addEventListener('touchmove', function(event) {
 });
 
 // Evento touchend
-document.addEventListener('touchend', function(event) {
+document.addEventListener('touchend', function (event) {
     // Aquí puedes agregar lógica adicional si lo necesitas
 });
-
-
-
-
 
 window.onload = init;
