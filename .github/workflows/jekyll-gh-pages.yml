@@ -46,8 +46,10 @@ jobs:
       - name: Copy models3d and img
         run: |
           mkdir -p dist/models3d
+          mkdir -p dist/img
           cp -r models3d/* dist/models3d/
           cp -r img/* dist/img/
+
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
