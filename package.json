@@ -5,7 +5,8 @@
   "main": "game.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "vite build --base /Jumper/"
+    "build": "vite build --base /Jumper/",
+    "preview": "vite preview"
   },
   "keywords": [],
   "author": "",

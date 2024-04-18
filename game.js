@@ -218,7 +218,7 @@ function init() {
                 }
             }
 
-        // Ocultar el pop-up de "Ganaste"
+        // Ocultar el pop-up de "Perdiste"
         document.getElementById('container-popup-lose').style.display = 'none';
 
         gameOverPopupShown = false; // Variable para controlar si el popup de "Perdiste" ya se ha mostrado
@@ -313,7 +313,122 @@ function init() {
                 }
             }
         });
-    
+
+        // Variables para almacenar las coordenadas táctiles iniciales
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        // Variable para almacenar la acción de correr actual
+        let currentRunAction = null;
+
+        // Factor de escala para ajustar la velocidad de movimiento
+        const movementScaleFactor = 0.25; // Puedes ajustar este valor según tu preferencia
+
+        // Evento touchstart
+        document.addEventListener('touchstart', function (event) {
+            // Obtener las coordenadas táctiles iniciales
+            touchStartX = event.touches[0].clientX;
+            touchStartY = event.touches[0].clientY;
+
+            // Determinar si el toque está en la mitad izquierda o derecha de la pantalla
+            if (touchStartX < window.innerWidth / 2) { // Si el toque está en la mitad izquierda
+                // Ejecuta la lógica para moverse a la izquierda
+                moveLeft();
+            } else { // Si el toque está en la mitad derecha
+                // Ejecuta la lógica para moverse a la derecha
+                moveRight();
+            }
+        });
+
+        // Evento touchmove
+        document.addEventListener('touchmove', function (event) {
+            // Evita que la página se desplace verticalmente durante el desplazamiento del dedo
+            event.preventDefault();
+
+            // Obtener las coordenadas táctiles actuales
+            const touchCurrentX = event.touches[0].clientX;
+            const touchCurrentY = event.touches[0].clientY;
+
+            // Calcular la distancia horizontal y vertical desplazada
+            const deltaX = (touchCurrentX - touchStartX) * movementScaleFactor; // Ajustar la velocidad horizontal
+            const deltaY = touchCurrentY - touchStartY;
+
+            // Determinar si el movimiento es horizontal o vertical
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                // Movimiento horizontal
+                if (deltaX > 0) {
+                    // Desplazamiento hacia la derecha
+                    moveRight();
+                } else {
+                    // Desplazamiento hacia la izquierda
+                    moveLeft();
+                }
+            } else {
+                // Movimiento vertical
+                if (deltaY < -10) {
+                    // Desplazamiento hacia arriba (saltar)
+
+                    // Detener la animación actual
+                    mixer.stopAllAction();
+
+                    // Reproducir la animación de salto una vez con easing
+                    const jumpAction = mixer.clipAction(player.animations[1]); // Suponiendo que la segunda animación es la de salto
+                    jumpAction.clampWhenFinished = true; // Asegura que la animación se detenga al finalizar
+                    jumpAction.loop = THREE.LoopOnce; // Reproducir una vez
+
+                    // Ajusta la velocidad de reproducción y aplica easing
+                    jumpAction.timeScale = 0.001; // Ajusta la velocidad de reproducción (cambia el valor según sea necesario)
+                    jumpAction.setEffectiveTimeScale(3); // Ajusta el efecto de escala de tiempo para aplicar easing (cambia el valor según sea necesario)
+
+                    jumpAction.play();
+
+                    // Programar la reanudación de la animación de inactividad (idle) después de que termine la animación de salto
+                    setTimeout(function() {
+                        mixer.stopAllAction();
+                        idleAction.play(); // Vuelve a reproducir la animación de idle
+                    }, jumpAction._clip.duration * 3000); // Espera el tiempo de duración de la animación de salto antes de reproducir la animación de inactividad
+                }
+            }
+
+            // Actualizar las coordenadas táctiles iniciales para el siguiente evento
+            touchStartX = touchCurrentX;
+            touchStartY = touchCurrentY;
+        });
+
+        // Evento touchend
+        document.addEventListener('touchend', function (event) {
+            // Detener la animación actual si existe
+            if (currentRunAction) {
+                currentRunAction.stop();
+            }
+
+            // Lógica para detener el movimiento o cualquier otra acción al levantar el dedo
+        });
+
+        // Función para moverse hacia la izquierda
+        function moveLeft() {
+            // Reproducir la animación de correr hacia la izquierda
+            currentRunAction = mixer.clipAction(player.animations[2]); // Suponiendo que la tercera animación es la de correr hacia la izquierda
+            player.rotation.y = 5; // Restablecer la rotación del modelo (mirando hacia la izquierda)
+            if (currentRunAction && !currentRunAction.isRunning()) {
+                // Inicia la animación de correr hacia la izquierda si no se está reproduciendo
+                currentRunAction.play();
+            }
+        }
+
+        // Función para moverse hacia la derecha
+        function moveRight() {
+            // Reproducir la animación de correr hacia la derecha
+            currentRunAction = mixer.clipAction(player.animations[2]); // Suponiendo que la tercera animación es la de correr hacia la derecha
+            player.rotation.y = 20; // Restablecer la rotación del modelo (mirando hacia la derecha)
+            if (currentRunAction && !currentRunAction.isRunning()) {
+                // Inicia la animación de correr hacia la derecha si no se está reproduciendo
+                currentRunAction.play();
+            }
+        }
+
+
+            
         animate(); // Inicia la animación después de cargar el modelo
     });
 
@@ -589,9 +704,5 @@ document.addEventListener('touchmove', function (event) {
     touchStartY = touchCurrentY;
 });
 
-// Evento touchend
-document.addEventListener('touchend', function (event) {
-    // Aquí puedes agregar lógica adicional si lo necesitas
-});
 
 window.onload = init;
