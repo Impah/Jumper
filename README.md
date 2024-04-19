@@ -22,7 +22,7 @@ Para poder jugar accede al siguiente link: https://impah.github.io/Jumper/
 - **Espacio:** Saltar.
 - **Teclas A y D:** Moverse hacia la izquierda y hacia la derecha.
 
-# Controles para Celular
+### Controles para Celular
 
 - **Deslizar verticalmente para arriba:** Saltar.
 - **Mantener para izquierda o derecha:** Moverse hacia la izquierda y hacia la derecha.
