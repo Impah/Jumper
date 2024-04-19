@@ -8,9 +8,9 @@ Jumper es un juego desarrollado en Three.js que te desafía a escalar plataforma
 - **Diversión adictiva:** El desafío de escalar plataformas y recolectar monedas te mantendrá entretenido durante un tiempo.
 - **Controles simples:** Controla al ratón con teclas simples para saltar y moverte.
 
-## Capturas de pantalla
+## Vista del juego
 
-![Descripción del GIF](ruta/al/archivo.gif)
+![Descripción del GIF](img/Jumper.gif)
 
 
 ## Jugar
